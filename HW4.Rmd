@@ -15,7 +15,6 @@ In machine learning, feature selection is the process of choosing variables that
 
 Often, data can contain attributes that are highly correlated with each other or not useful in helping predict our response variable. Many methods perform better if such variables are removed. Feature selection is usually imporant to implement during the data pre-processing steps of machine learning. 
 
-
 ```{r load relevant libraries, include=FALSE}
 library(tidyverse)
 library(caret)
@@ -164,6 +163,102 @@ importance(rfmodel)
 
 1. Compare the most important features from at least 2 different classes of feature selection methods covered in this tutorial with any reasonable machine learning dataset from mlbench. Do these feature selection methods provide similar results? 
 
+```{r correlation}
+
+# FEATURE SELECTION BASED ON CORRELATION (FILTER METHOD)
+
+BreastCancer_num = transform(BreastCancer, Id = as.numeric(Id), 
+                         Cl.thickness = as.numeric(Cl.thickness),
+                         Cell.size = as.numeric(Cell.size),
+                         Cell.shape = as.numeric(Cell.shape), 
+                         Marg.adhesion = as.numeric(Marg.adhesion),
+                         Epith.c.size = as.numeric(Epith.c.size),
+                         Bare.nuclei = as.numeric(Bare.nuclei), 
+                         Bl.cromatin = as.numeric(Bl.cromatin), 
+                         Normal.nucleoli = as.numeric(Normal.nucleoli),
+                         Mitoses = as.numeric(Mitoses))
+
+BreastCancer_num[is.na(BreastCancer_num)] = 0
+
+# ensure results are reproducible
+set.seed(7)
+
+#calculate correlation matrix using pearson correlation (others include spearman and kendall)
+correlation_matrix = cor(BreastCancer_num[,1:10])
+
+#visualize correlation matrix
+library(corrplot)
+corrplot(correlation_matrix, order = "hclust")
+
+#apply correlation filter of 0.7
+highly_correlated <- colnames(BreastCancer[, -1])[findCorrelation(correlation_matrix, cutoff = 0.7, verbose = TRUE)]
+
+#which features are highly correlated and can be removed
+highly_correlated
+
+# OUTCOME
+
+# Cell.shape AND Marg.adhesion ARE BOTH DETERMINED TO BE HIGHLY CORRELATED. THIS MEANS THEY WILL NOT BE RELATIVELY USEFUL IN DEMONSTRATING THE VARIANCE IN THE DATA. ON THAT BASIS, USING THIS METHOD OF FEATURE SELECTION, THEY ARE NOT SELECTED. 
+
+```
+
+
+
+```{r RFE}
+
+# RFE FEATURE SELECTION (WRAPPER METHOD)
+
+# ensure results are reproducible
+set.seed(123)
+
+# define the control using a random forest selection function (PURPOSEFULLY DIFFERENT FROM TUTORIAL, FOR THE SAKE OF EXPERIMENTATION)
+control = rfeControl(functions=rfFuncs, method="cv", number=10) # NOTE 10 FOLD CROSS- VALIDATION RESAMPLING METHOD
+
+# run the RFE algorithm (NOTE: ALL FEATURES WILL BE TESTED AT THE SAME TIME)
+results = rfe(BreastCancer_num[,1:10], BreastCancer_num[,11], sizes = c(1:10), rfeControl = control)
+
+results
+results$variables
+
+# plot the results (NOTE: ADDITIONAL STEP INCORPORATED, AS VISUALS FACILITATE DEMONSTRATION OF RESULTS)
+plot(results, type=c("g", "o"))
+
+# OUTCOME
+
+# THE PLOT CLEARLY SHOWS THAT OPTIMAL FEATURE SELECTION INVOLVES USING 8 FEATURES. IF Id IS DISCOUNTED, Mitoses IS THE FEATURE EXCLUDED USING THE RFE METHOD cf. Cell.shape AND Marg.adhesion FROM THE CORRELATION METHOD.
+
+```
+
 2. Attempt a feature selection method not covered in this tutorial (backward elimination, forward propogation, etc.)
+
+```{r}
+
+# FEATURE SELECTION USING THE CARET PACKAGE'S varImp FUNCTION (EMBEDDED METHOD)
+
+# ensure results are repeatable
+set.seed(7)
+
+# prepare training scheme
+control <- trainControl(method="repeatedcv", number=10, repeats=3)
+
+# train the model
+model <- train(Class~., data=BreastCancer_num, method="lvq", preProcess="scale", trControl=control) # NOTE: Learning Vector Quantization (LVQ) model constructed
+
+# determine feature (variable) importance
+importance <- varImp(model, scale=FALSE)
+
+importance
+
+# plot importance
+plot(importance)
+
+# OUTCOME
+
+# THE PLOT VERY CLEARLY SHOWS FEATURES RANKED IN ORDER OF IMPORTANCE. IF Id IS DISCOUNTED, Mitoses WOULD BE THE MOST LIKELY FEATURE EXCLUDED USING THIS METHOD. THE IMPORTANCE METHOD IS COMPARABLE TO THE RFE METHOD IN ITS CHOICE OF FEATURE EXCLUSION, ALTHOUGH THE RANKING OF FEATURES IS NOT QUITE THE SAME.
+
+```
+
+
+
 
 
