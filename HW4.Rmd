@@ -1,8 +1,10 @@
 ---
-title: "Machine Learning 2019: Feature Selection"
+title: 'Machine Learning 2019: Feature Selection'
 author: "Sonali Narang"
-date: October 24, 2019
-output: pdf_document
+date: "October 24, 2019"
+output:
+  html_document:
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
