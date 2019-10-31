@@ -7,8 +7,8 @@ output:
     df_print: paged
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r }
+
 ```
 
 ## Feature Selection 
@@ -165,7 +165,7 @@ importance(rfmodel)
 
 1. Compare the most important features from at least 2 different classes of feature selection methods covered in this tutorial with any reasonable machine learning dataset from mlbench. Do these feature selection methods provide similar results? 
 
-```{r correlation}
+```{r}
 
 # FEATURE SELECTION BASED ON CORRELATION (FILTER METHOD)
 
